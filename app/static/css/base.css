@@ -1,0 +1,43 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa;
+    box-sizing: border-box;
+    margin: 0; 
+    min-height: 100vh; 
+    display: flex; 
+    flex-direction: column; 
+}
+
+.navbar {
+    background-color: #003087;
+}
+
+.navbar-brand {
+    font-weight: 700;
+}
+
+.btn-primary {
+    background-color: #FF6200;
+    border-color: #FF6200;
+}
+
+.btn-primary:hover {
+    background-color: #e65b00;
+    border-color: #e65b00;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+    flex: 1;
+}
+
+footer {
+    background-color: #003087;
+    color: white;
+    padding: 1rem 0;
+    width: 100%;
+}
