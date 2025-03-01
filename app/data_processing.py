@@ -1,6 +1,11 @@
 import pandas as pd
 from sqlalchemy import create_engine
 import os
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def process_data(csv_path, chunksize=10000):
     """
@@ -22,15 +27,24 @@ def process_data(csv_path, chunksize=10000):
     )
     
     first_chunk = True
-    for chunk in chunk_iterator:
-        # Aplicar filtros com os nomes corretos das colunas
+    total_rows = 0
+    
+    for i, chunk in enumerate(chunk_iterator):
+        logger.info(f"Processando chunk {i + 1} com {len(chunk)} linhas totais")
+        
+        # Verificar colunas disponíveis
+        logger.info(f"Colunas no chunk: {chunk.columns.tolist()}")
+        
+        # Aplicar filtros
         chunk_filtered = chunk[
             (chunk['EMPRESA_SIGLA'] == 'GLO') &
             (chunk['GRUPO_DE_VOO'] == 'REGULAR') &
             (chunk['NATUREZA'] == 'DOMÉSTICA')
         ]
         
-        # Criar a coluna MERCADO, tratando valores NaN
+        logger.info(f"Linhas após filtro: {len(chunk_filtered)}")
+        
+        # Criar a coluna MERCADO
         chunk_filtered['MERCADO'] = chunk_filtered.apply(
             lambda row: ''.join(sorted([
                 str(row['AEROPORTO_DE_ORIGEM_SIGLA']) if pd.notna(row['AEROPORTO_DE_ORIGEM_SIGLA']) else '',
@@ -41,17 +55,20 @@ def process_data(csv_path, chunksize=10000):
         
         # Selecionar colunas relevantes
         chunk_final = chunk_filtered[['ANO', 'MES', 'MERCADO', 'RPK']]
+        total_rows += len(chunk_final)
         
         # Salvar no banco de dados
         if first_chunk:
             chunk_final.to_sql('flight_data', engine, if_exists='replace', index=False)
+            logger.info(f"Tabela criada com {len(chunk_final)} linhas no primeiro chunk")
             first_chunk = False
         else:
             chunk_final.to_sql('flight_data', engine, if_exists='append', index=False)
+            logger.info(f"Adicionado {len(chunk_final)} linhas ao banco")
         
-        print(f"Processado chunk com {len(chunk_final)} linhas filtradas.")
+    if total_rows == 0:
+        logger.warning("Nenhum dado foi inserido no banco. Verifique os filtros ou o CSV.")
 
 if __name__ == "__main__":
-    # Caminho do arquivo, caso de erro, coloque o caminho completo do arquivo.
     csv_path = r"C:\Users\lucas\OneDrive\Área de Trabalho\projetos\teste\data\Dados_Estatisticos.csv"
     process_data(csv_path)
