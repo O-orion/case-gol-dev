@@ -1,0 +1,7 @@
+#filterForm .form-select, #filterForm .form-label {
+    font-size: 0.9rem;
+}
+
+#rpkChart {
+    max-height: 400px;
+}

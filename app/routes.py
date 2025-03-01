@@ -54,3 +54,33 @@ def logout():
     logout_user()
     flash('Logout realizado com sucesso!', 'success')
     return redirect(url_for('main.login'))
+
+@bp.route('/dashboard', methods=['GET', 'POST'])
+@login_required
+def dashboard():
+    engine = create_engine('sqlite:///flight_stats.db')
+    df = pd.read_sql('SELECT * FROM flight_data', con=engine)
+    mercados = sorted(df['MERCADO'].unique().tolist())
+    anos = sorted(df['ANO'].unique().tolist())
+    current_year, current_month = datetime.now().year, datetime.now().month
+
+    if request.method == 'POST':
+        try:
+            filter_data = FilterData(
+                mercado=request.form['mercado'],
+                ano_inicio=int(request.form['ano_inicio']),
+                ano_fim=int(request.form['ano_fim']),
+                mes_inicio=int(request.form.get('mes_inicio', 1)),
+                mes_fim=int(request.form.get('mes_fim', 12))
+            )
+            chart_data = get_flight_data(filter_data)
+            return jsonify(chart_data)
+        except ValueError as e:
+            logger.error(f"Erro de validação: {str(e)}")
+            return jsonify({'error': str(e)}), 400
+        except Exception as e:
+            logger.error(f"Erro interno: {str(e)}")
+            return jsonify({'error': 'Erro interno no servidor.'}), 500
+
+    return render_template('dashboard.html', mercados=mercados, anos=anos,
+                         current_year=current_year, current_month=current_month)
