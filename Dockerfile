@@ -3,7 +3,7 @@ FROM python:3.9-slim
 ENV PYTHONUNBUFFERED=1 \
     FLASK_ENV=production \
     FLASK_APP=app \
-    SECRET_KEY="GOL"  # Substitua por uma chave segura
+    SECRET_KEY="GOL"
 
 WORKDIR /app
 
