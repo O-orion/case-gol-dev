@@ -15,6 +15,11 @@ logger = logging.getLogger(__name__)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Redirecionando para o login
+@bp.route('/')
+def index():
+    return redirect(url_for('main.login'))
+
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
