@@ -60,22 +60,22 @@ Essa aplicação:
  - Docker instalado
 
 ### Instruções
- 1 - Baixe a imagem do Docker Hub: docker pull oorionn/gol-flight-stats:latest
- 2 - Rode o contêiner: docker run -p 5000:8000 seu-usuario/gol-flight-stats:latest
+    - Baixe a imagem do Docker Hub: docker pull oorionn/gol-flight-stats:latest
+    - Rode o contêiner: docker run -p 5000:8000 seu-usuario/gol-flight-stats:latest
 
 ## Deploy Online
 A aplicação está disponível online para teste: https://gol-flight-stats.onrender.com
 
 
 ## Funcionalidades
-    Autenticação: Registro e login de usuários com validação.
-    Filtros: Selecione mercados (ex.: SBGRSBSV) e intervalos de datas (ano/mês).
-    Gráficos: Visualização de RPK em linha ou barra, dependendo do número de pontos.
-    Responsividade: Interface adaptável com Bootstrap.
+    - Autenticação: Registro e login de usuários com validação.
+    - Filtros: Selecione mercados (ex.: SBGRSBSV) e intervalos de datas (ano/mês).
+    - Gráficos: Visualização de RPK em linha ou barra, dependendo do número de pontos.
+    - Responsividade: Interface adaptável com Bootstrap.
 
 ---
 
-### **Personalização**
+### **Autor**
 
 1. **Oorionn**
 2. **[URL do Render](https://gol-flight-stats.onrender.com)**
