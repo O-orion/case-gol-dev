@@ -46,9 +46,9 @@ Essa aplicação:
     pip install -r requirements.txt
 
 4. Processe os dados da ANAC pra criar o banco
-    1 - Crie a pasta data e dentro dela coloque o arquivo CSV
-    2 - Altere o caminho para o arquivo csv que está dentro do arquivo data_processing.py
-    3 - rode o seguinte comando: python app/data_processing.py
+    - 1 - Crie a pasta data e dentro dela coloque o arquivo CSV
+    - 2 - Altere o caminho para o arquivo csv que está dentro do arquivo data_processing.py
+    - 3 - rode o seguinte comando: python app/data_processing.py
 
 5. Inicie a aplicação
     1 -  Abra o prompt de comando
