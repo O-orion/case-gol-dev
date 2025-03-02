@@ -38,9 +38,9 @@ Essa aplicação:
    cd case-gol-dev
 
 2. Crie e ative um ambiente virtual:
-    python -m venv venv
-    source venv/bin/activate  # Linux/Mac
-    venv\Scripts\activate     # Windows
+    1 - python -m venv venv
+    2 - source venv/bin/activate  # Linux/Mac
+    3 - venv\Scripts\activate     # Windows
 
 3. Instale as dependências:
     pip install -r requirements.txt
