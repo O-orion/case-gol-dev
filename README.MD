@@ -34,7 +34,7 @@ Essa aplicação:
 ### Instalação
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu-usuario/case-gol-dev.git
+   git clone https://github.com/O-orion/case-gol-dev
    cd case-gol-dev
 
 2. Crie e ative um ambiente virtual:
