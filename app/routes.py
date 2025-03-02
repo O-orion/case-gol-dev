@@ -46,11 +46,16 @@ def register():
             flash('Usuário já existe.', 'danger')
             return redirect(url_for('main.register'))
 
-        user = User(username=username, password=password)
-        db.session.add(user)
-        db.session.commit()
-        flash('Registrado com sucesso! Faça login.', 'success')
-        return redirect(url_for('main.login'))
+        try:
+            user = User(username=username, password=password)
+            db.session.add(user)
+            db.session.commit()
+            logger.info(f"Usuário {username} registrado com sucesso")
+            flash('Registrado com sucesso! Faça login.', 'success')
+            return redirect(url_for('main.login'))
+        except Exception as e:
+            logger.error(f"Erro ao registrar usuário: {str(e)}")
+            return "Internal Server Error", 500  # Temporário pra capturar o erro nos logs
     return render_template('register.html')
 
 @bp.route('/logout')

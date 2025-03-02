@@ -8,15 +8,18 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 COPY requirements.txt .
-
-RUN pip install --no-cache-dir -r requirements.txt && \
-    apt-get update && apt-get install -y --no-install-recommends gcc && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN useradd -m -r appuser && chown appuser:appuser /app
+RUN useradd -m -r appuser && \
+    chown -R appuser:appuser /app && \
+    chmod -R 775 /app  # Permissões de leitura/escrita pro appuser
+
 USER appuser
+
+RUN [ -f flight_stats.db ] || touch flight_stats.db && \
+    chmod 664 flight_stats.db
 
 EXPOSE 8000
 
