@@ -1,11 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, Response
 from flask_login import login_user, login_required, logout_user, current_user
-from .models import User
 from . import db, login_manager
-from .services import FilterData, get_flight_data
+from .models import User, FilterData 
+from .services import get_flight_data, get_flight_data_csv, get_dashboard_initial_data, FlightDataRepository
 from datetime import datetime
-from sqlalchemy import create_engine 
-import pandas as pd
 import logging
 
 bp = Blueprint('main', __name__)
@@ -15,7 +13,6 @@ logger = logging.getLogger(__name__)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Redirecionando para o login
 @bp.route('/')
 def index():
     return redirect(url_for('main.login'))
@@ -38,14 +35,12 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
         if len(username) < 3 or len(password) < 6:
             flash('Usuário (mín. 3) ou senha (mín. 6) inválidos.', 'danger')
             return redirect(url_for('main.register'))
         if User.query.filter_by(username=username).first():
             flash('Usuário já existe.', 'danger')
             return redirect(url_for('main.register'))
-
         try:
             user = User(username=username, password=password)
             db.session.add(user)
@@ -55,7 +50,7 @@ def register():
             return redirect(url_for('main.login'))
         except Exception as e:
             logger.error(f"Erro ao registrar usuário: {str(e)}")
-            return "Internal Server Error", 500  # Temporário pra capturar o erro nos logs
+            return "Internal Server Error", 500
     return render_template('register.html')
 
 @bp.route('/logout')
@@ -68,10 +63,17 @@ def logout():
 @bp.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    engine = create_engine('sqlite:///flight_stats.db')
-    df = pd.read_sql('SELECT * FROM flight_data', con=engine)
-    mercados = sorted(df['MERCADO'].unique().tolist())
-    anos = sorted(df['ANO'].unique().tolist())
+    """
+    Exibe dashboard com os filtros e gráfico de RPK.
+
+    Returns:
+        Para GET: Renderiza o template do dashboard.
+        Para POST: Retorna JSON com dados do gráfico.
+    """
+    repo = FlightDataRepository()
+    initial_data = get_dashboard_initial_data(repo)
+    mercados = initial_data['mercados']
+    anos = initial_data['anos']
     current_year, current_month = datetime.now().year, datetime.now().month
 
     if request.method == 'POST':
@@ -83,7 +85,7 @@ def dashboard():
                 mes_inicio=int(request.form.get('mes_inicio', 1)),
                 mes_fim=int(request.form.get('mes_fim', 12))
             )
-            chart_data = get_flight_data(filter_data)
+            chart_data = get_flight_data(filter_data, repo)
             return jsonify(chart_data)
         except ValueError as e:
             logger.error(f"Erro de validação: {str(e)}")
@@ -92,5 +94,38 @@ def dashboard():
             logger.error(f"Erro interno: {str(e)}")
             return jsonify({'error': 'Erro interno no servidor.'}), 500
 
-    return render_template('dashboard.html', mercados=mercados, anos=anos,
-                         current_year=current_year, current_month=current_month)
+    return render_template(
+        'dashboard.html',
+        mercados=mercados,
+        anos=anos,
+        current_year=current_year,
+        current_month=current_month
+    )
+
+@bp.route('/export_csv', methods=['POST'])
+@login_required
+def export_csv():
+    repo = FlightDataRepository()
+    try:
+        filter_data = FilterData(
+            mercado=request.form['mercado'],
+            ano_inicio=int(request.form['ano_inicio']),
+            ano_fim=int(request.form['ano_fim']),
+            mes_inicio=int(request.form.get('mes_inicio', 1)),
+            mes_fim=int(request.form.get('mes_fim', 12))
+        )
+        csv_content = get_flight_data_csv(filter_data, repo)
+        filename = f"rpk_{filter_data.mercado}_{filter_data.ano_inicio}-{filter_data.mes_inicio}_to_{filter_data.ano_fim}-{filter_data.mes_fim}.csv"
+        return Response(
+            csv_content,
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment;filename={filename}"}
+        )
+    except ValueError as e:
+        logger.error(f"Erro ao exportar CSV: {str(e)}")
+        flash(f"Erro: {str(e)}", 'danger')
+        return redirect(url_for('main.dashboard'))
+    except Exception as e:
+        logger.error(f"Erro interno ao exportar CSV: {str(e)}")
+        flash("Erro interno ao gerar o CSV.", 'danger')
+        return redirect(url_for('main.dashboard'))
