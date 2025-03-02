@@ -1,8 +1,13 @@
 from typing import List, Dict, Union
+from flask import flash
 import pandas as pd
 import logging
+import io 
 from .models import FilterData
 from .repositories import FlightDataRepository
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
 
 logger = logging.getLogger(__name__)
 
@@ -77,3 +82,65 @@ def get_flight_data_csv(filter_data: FilterData, repo: FlightDataRepository) -> 
     csv_content: str = flight_data[['ANO', 'MES', 'MERCADO', 'RPK']].to_csv(index=False)
     logger.info(f"Gerado CSV com {len(flight_data)} linhas")
     return csv_content
+
+def get_flight_data_pdf(filter_data: FilterData, repo: FlightDataRepository) -> io.BytesIO:
+    """
+    Gera um PDF com os dados filtrados do dashboard.
+
+    Args:
+        filter_data: Filtros de mercado e período.
+        repo: Repositório para acesso aos dados de voos.
+
+    Returns:
+        Buffer de bytes contendo o PDF gerado, ou None se não houver dados ou erro.
+    """
+    logger.info(f"Gerando PDF para filtros: {filter_data.model_dump()}")
+    flight_data: pd.DataFrame = repo.get_filtered_flight_data(filter_data)
+    
+    if flight_data.empty:
+        logger.info("Nenhum dado para exportar em PDF")
+        flash("Nenhum dado encontrado para os filtros selecionados.", "warning")  # Adiciona flash aqui pra debug
+        return None
+
+    logger.info(f"Dados para PDF (primeiras 5 linhas): {flight_data.head().to_dict(orient='records')}")
+    flight_data['RPK'] = pd.to_numeric(flight_data['RPK'], errors='coerce').fillna(0)
+    
+    # Prepara os dados pra tabela no PDF
+    data = [flight_data.columns.tolist()] + flight_data.values.tolist()
+    logger.info(f"Dados preparados para tabela (primeiras 2 linhas): {data[:2]}")
+    
+    try:
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        table = Table(data)
+        
+        # Estiliza a tabela
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ]))
+        
+        doc.build([table])
+        buffer.seek(0)
+        logger.info(f"PDF gerado com {len(flight_data)} linhas, tamanho do buffer: {buffer.getbuffer().nbytes} bytes")
+        
+        # Verifica se o buffer tem conteúdo
+        if buffer.getbuffer().nbytes == 0:
+            logger.error("Buffer do PDF está vazio após geração")
+            return None
+        
+        # Salva o buffer em um arquivo temporário pra debug
+        with open("debug_output.pdf", "wb") as f:
+            f.write(buffer.getvalue())
+        logger.info("PDF salvo em 'debug_output.pdf' para inspeção")
+        
+        return buffer
+    except Exception as e:
+        logger.error(f"Erro ao gerar PDF: {str(e)}", exc_info=True)
+        return None

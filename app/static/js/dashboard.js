@@ -1,13 +1,17 @@
+// static/js/dashboard.js
 document.addEventListener('DOMContentLoaded', () => {
     const ctx = document.getElementById('rpkChart').getContext('2d');
     let chart;
 
-    document.getElementById('filterForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const filterBtn = document.getElementById('filterBtn');
-        const loading = document.getElementById('loading');
-        const messageDiv = document.getElementById('message');
+    const filterForm = document.getElementById('filterForm');
+    const filterBtn = document.getElementById('filterBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const loading = document.getElementById('loading');
+    const messageDiv = document.getElementById('message');
 
+    filterForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
         filterBtn.disabled = true;
         loading.classList.remove('d-none');
         messageDiv.innerHTML = '';
@@ -15,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/dashboard', {
                 method: 'POST',
-                body: new FormData(e.target),
+                body: new FormData(filterForm),
             });
 
             if (!response.ok) throw new Error(`Erro ${response.status}: ${await response.text()}`);
@@ -81,6 +85,72 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             loading.classList.add('d-none');
             filterBtn.disabled = false;
+        }
+    });
+
+    exportCsvBtn.addEventListener('click', async () => {
+        exportCsvBtn.disabled = true;
+        loading.classList.remove('d-none');
+        messageDiv.innerHTML = '';
+
+        try {
+            const response = await fetch('/export_csv', {
+                method: 'POST',
+                body: new FormData(filterForm),
+            });
+
+            if (!response.ok) throw new Error(`Erro ${response.status}: ${await response.text()}`);
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = response.headers.get('Content-Disposition')?.split('filename=')[1] || 'rpk_report.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            messageDiv.innerHTML = `<div class="alert alert-success">CSV exportado com sucesso!</div>`;
+        } catch (error) {
+            messageDiv.innerHTML = `<div class="alert alert-danger">Erro ao exportar CSV: ${error.message}</div>`;
+            console.error('Erro:', error);
+        } finally {
+            loading.classList.add('d-none');
+            exportCsvBtn.disabled = false;
+        }
+    });
+
+    exportPdfBtn.addEventListener('click', async () => {
+        exportPdfBtn.disabled = true;
+        loading.classList.remove('d-none');
+        messageDiv.innerHTML = '';
+
+        try {
+            const response = await fetch('/export_pdf', {
+                method: 'POST',
+                body: new FormData(filterForm),
+            });
+
+            if (!response.ok) throw new Error(`Erro ${response.status}: ${await response.text()}`);
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = response.headers.get('Content-Disposition')?.split('filename=')[1] || 'rpk_report.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            messageDiv.innerHTML = `<div class="alert alert-success">PDF exportado com sucesso!</div>`;
+        } catch (error) {
+            messageDiv.innerHTML = `<div class="alert alert-danger">Erro ao exportar PDF: ${error.message}</div>`;
+            console.error('Erro:', error);
+        } finally {
+            loading.classList.add('d-none');
+            exportPdfBtn.disabled = false;
         }
     });
 });

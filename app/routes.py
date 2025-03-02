@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from flask_login import login_user, login_required, logout_user, current_user
 from . import db, login_manager
 from .models import User, FilterData 
-from .services import get_flight_data, get_flight_data_csv, get_dashboard_initial_data, FlightDataRepository
+from .services import get_flight_data, get_flight_data_csv, get_dashboard_initial_data, FlightDataRepository, get_flight_data_pdf
 from datetime import datetime
 import logging
 
@@ -128,4 +128,36 @@ def export_csv():
     except Exception as e:
         logger.error(f"Erro interno ao exportar CSV: {str(e)}")
         flash("Erro interno ao gerar o CSV.", 'danger')
+        return redirect(url_for('main.dashboard'))
+
+@bp.route('/export_pdf', methods=['POST'])
+@login_required
+def export_pdf():
+    """Exporta os dados filtrados do dashboard como PDF."""
+    repo = FlightDataRepository()
+    try:
+        filter_data = FilterData(
+            mercado=request.form['mercado'],
+            ano_inicio=int(request.form['ano_inicio']),
+            ano_fim=int(request.form['ano_fim']),
+            mes_inicio=int(request.form.get('mes_inicio', 1)),
+            mes_fim=int(request.form.get('mes_fim', 12))
+        )
+        pdf_buffer = get_flight_data_pdf(filter_data, repo)
+        if not pdf_buffer:
+            flash("Nenhum dado para exportar em PDF.", 'danger')
+            return redirect(url_for('main.dashboard'))
+        filename = f"rpk_{filter_data.mercado}_{filter_data.ano_inicio}-{filter_data.mes_inicio}_to_{filter_data.ano_fim}-{filter_data.mes_fim}.pdf"
+        return Response(
+            pdf_buffer,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f"attachment;filename={filename}"}
+        )
+    except ValueError as e:
+        logger.error(f"Erro ao exportar PDF: {str(e)}")
+        flash(f"Erro: {str(e)}", 'danger')
+        return redirect(url_for('main.dashboard'))
+    except Exception as e:
+        logger.error(f"Erro interno ao exportar PDF: {str(e)}")
+        flash("Erro interno ao gerar o PDF.", 'danger')
         return redirect(url_for('main.dashboard'))
