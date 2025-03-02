@@ -38,22 +38,22 @@ Essa aplicação:
    cd case-gol-dev
 
 2. Crie e ative um ambiente virtual:
-    1 - python -m venv venv
-    2 - source venv/bin/activate  # Linux/Mac
-    3 - venv\Scripts\activate     # Windows
+     - python -m venv venv
+     - source venv/bin/activate  # Linux/Mac
+     - venv\Scripts\activate     # Windows
 
 3. Instale as dependências:
     pip install -r requirements.txt
 
 4. Processe os dados da ANAC pra criar o banco
-    - 1 - Crie a pasta data e dentro dela coloque o arquivo CSV
-    - 2 - Altere o caminho para o arquivo csv que está dentro do arquivo data_processing.py
-    - 3 - rode o seguinte comando: python app/data_processing.py
+    -  Crie a pasta data e dentro dela coloque o arquivo CSV
+    -  Altere o caminho para o arquivo csv que está dentro do arquivo data_processing.py
+    -  rode o seguinte comando: python app/data_processing.py
 
 5. Inicie a aplicação
-    1 -  Abra o prompt de comando
-    2 -  Navegue até a pasta raiz do projeto
-    3 -  Execute o seguinte comando: python run.py
+    -  Abra o prompt de comando
+    -  Navegue até a pasta raiz do projeto
+    -  Execute o seguinte comando: python run.py
 
 ## Como Executar com Docker
 ### Pré-requisitos
