@@ -1,4 +1,3 @@
-# tests/test_services.py
 import pytest
 import pandas as pd
 from app.services import get_flight_data, get_flight_data_csv, get_dashboard_initial_data, FilterData
@@ -71,7 +70,6 @@ def test_get_flight_data_csv(mock_repo):
         ano_fim=2023
     )
     csv_content = get_flight_data_csv(filter_data, mock_repo)
-    # Normaliza os finais de linha pra \n
     csv_content = csv_content.replace('\r\n', '\n')
     expected = "ANO,MES,MERCADO,RPK\n2023,1,SBGRSBSV,1000\n2023,2,SBGRSBSV,2000\n"
     assert csv_content == expected

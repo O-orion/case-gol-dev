@@ -1,4 +1,3 @@
-# tests/test_routes.py
 import pytest
 from flask import url_for
 from app import create_app, db
@@ -31,7 +30,7 @@ def test_login_post_success(client, mocker):
     db.session.add(user)
     db.session.commit()
     response = client.post('/login', data={'username': 'testuser', 'password': 'testpass'})
-    assert response.status_code == 302  # Redirect pro dashboard
+    assert response.status_code == 302 
     assert response.headers['Location'] == '/dashboard'
 
 def test_dashboard_get(client, mocker):

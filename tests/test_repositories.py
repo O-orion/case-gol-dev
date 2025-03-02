@@ -1,4 +1,3 @@
-# tests/test_repositories.py
 import pytest
 import pandas as pd
 from sqlalchemy import create_engine
@@ -21,9 +20,8 @@ def in_memory_db():
 @pytest.fixture
 def repo(in_memory_db):
     """Cria uma instância do FlightDataRepository com o banco em memória configurado."""
-    # Passa o engine já criado pro repositório
     repo = FlightDataRepository()
-    repo.engine = in_memory_db  # Substitui o engine padrão
+    repo.engine = in_memory_db
     return repo
 
 def test_get_all_flight_data(repo):
