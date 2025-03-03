@@ -1,6 +1,5 @@
 # GOL Flight Stats
 
-![GOL Flight Stats](https://via.placeholder.com/800x200.png?text=GOL+Flight+Stats)  
 *Análise de dados estatísticos de voos da GOL com Flask e Docker*
 
 Bem-vindo ao **GOL Flight Stats**, uma aplicação web desenvolvida para o case de desenvolvedor da GOL. Este projeto processa dados públicos da ANAC, exibe estatísticas de voos da GOL (RPK por mercado e período) e oferece autenticação de usuários, tudo empacotado em um contêiner Docker.
@@ -21,6 +20,15 @@ Essa aplicação:
 - **Banco de Dados**: SQLite
 - **Contêiner**: Docker com Gunicorn
 - **Deploy**: Render
+
+---
+
+## Funcionalidades
+- **Autenticação**: Registro e login de usuários com senha criptografada.
+- **Dashboard Interativo**: Filtros dinâmicos por mercado (ex.: `SBGRSBSV`), ano e mês, com gráficos de RPK (linha ou barra) gerados via Chart.js.
+- **Exportação de Dados**: Geração de relatórios em CSV e PDF com base nos filtros aplicados.
+- **Histórico de Consultas**: Registro automático dos últimos 5 filtros usados por usuário, exibidos em tabela.
+- **Processamento de Dados**: Importação de arquivos CSV da ANAC para SQLite em chunks, com filtragem específica pra GOL.
 
 ---
 
