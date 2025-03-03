@@ -41,3 +41,17 @@ class FilterData(BaseModel):
             if values['ano_inicio'] == values['ano_fim'] and v < values['mes_inicio']:
                 raise ValueError('Mês fim deve ser maior ou igual ao mês início no mesmo ano.')
         return v
+    
+class UserFilter(db.Model):
+    """Modelo para armazenar filtros usados por usuários."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    mercado = db.Column(db.String(20), nullable=False)
+    ano_inicio = db.Column(db.Integer, nullable=False)
+    ano_fim = db.Column(db.Integer, nullable=False)
+    mes_inicio = db.Column(db.Integer, nullable=False)
+    mes_fim = db.Column(db.Integer, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self) -> str:
+        return f'<UserFilter {self.user_id} - {self.mercado} {self.ano_inicio}-{self.mes_inicio} to {self.ano_fim}-{self.mes_fim}>'

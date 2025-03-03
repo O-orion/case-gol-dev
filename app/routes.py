@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, Response
 from flask_login import login_user, login_required, logout_user, current_user
 from . import db, login_manager
-from .models import User, FilterData 
+from .models import User, FilterData, UserFilter
 from .services import get_flight_data, get_flight_data_csv, get_dashboard_initial_data, FlightDataRepository, get_flight_data_pdf
 from datetime import datetime
 import logging
@@ -60,11 +60,12 @@ def logout():
     flash('Logout realizado com sucesso!', 'success')
     return redirect(url_for('main.login'))
 
+# app/routes.py (apenas a rota ajustada)
 @bp.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
     """
-    Exibe dashboard com os filtros e gráfico de RPK.
+    Exibe o dashboard com filtros, gráfico de RPK e histórico de consultas.
 
     Returns:
         Para GET: Renderiza o template do dashboard.
@@ -76,6 +77,17 @@ def dashboard():
     anos = initial_data['anos']
     current_year, current_month = datetime.now().year, datetime.now().month
 
+    # Pega histórico de consultas do usuário e formata os meses
+    history = UserFilter.query.filter_by(user_id=current_user.id).order_by(UserFilter.timestamp.desc()).limit(5).all()
+    history_formatted = [
+        {
+            'mercado': f.mercado,
+            'periodo': f"{f.ano_inicio}-{f.mes_inicio:02d} a {f.ano_fim}-{f.mes_fim:02d}",
+            'timestamp': f.timestamp.strftime('%d/%m/%Y %H:%M')
+        }
+        for f in history
+    ]
+
     if request.method == 'POST':
         try:
             filter_data = FilterData(
@@ -86,6 +98,20 @@ def dashboard():
                 mes_fim=int(request.form.get('mes_fim', 12))
             )
             chart_data = get_flight_data(filter_data, repo)
+            
+            # Salva o filtro no histórico
+            user_filter = UserFilter(
+                user_id=current_user.id,
+                mercado=filter_data.mercado,
+                ano_inicio=filter_data.ano_inicio,
+                ano_fim=filter_data.ano_fim,
+                mes_inicio=filter_data.mes_inicio,
+                mes_fim=filter_data.mes_fim
+            )
+            db.session.add(user_filter)
+            db.session.commit()
+            logger.info(f"Filtro salvo no histórico para usuário {current_user.id}")
+
             return jsonify(chart_data)
         except ValueError as e:
             logger.error(f"Erro de validação: {str(e)}")
@@ -99,7 +125,8 @@ def dashboard():
         mercados=mercados,
         anos=anos,
         current_year=current_year,
-        current_month=current_month
+        current_month=current_month,
+        history=history_formatted  # Passa o histórico formatado
     )
 
 @bp.route('/export_csv', methods=['POST'])
