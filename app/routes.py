@@ -60,7 +60,7 @@ def logout():
     flash('Logout realizado com sucesso!', 'success')
     return redirect(url_for('main.login'))
 
-# app/routes.py (apenas a rota ajustada)
+
 @bp.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
@@ -126,7 +126,7 @@ def dashboard():
         anos=anos,
         current_year=current_year,
         current_month=current_month,
-        history=history_formatted  # Passa o histórico formatado
+        history=history_formatted 
     )
 
 @bp.route('/export_csv', methods=['POST'])
