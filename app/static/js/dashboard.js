@@ -163,7 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loading.classList.remove('d-none');
             messageDiv.innerHTML = '';
     
-            console.log('OIEEEEE')
             try {
                 const response = await fetch('/rpk', {
                     method: 'POST',
@@ -200,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'RPK (Revenue Passenger Kilometers)',
+                            label: 'RPK / ASK',
                             data: values,
                             backgroundColor: isSinglePoint ? '#FF6200' : 'rgba(255, 98, 0, 0.2)',
                             borderColor: '#FF6200',
@@ -215,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                title: { display: true, text: 'RPK' },
+                                title: { display: true, text: 'RPK / ASK' },
                                 ticks: { callback: value => value.toLocaleString('pt-BR') }
                             },
                             x: { title: { display: true, text: 'Data (Ano-Mês)' } }

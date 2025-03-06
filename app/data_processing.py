@@ -25,7 +25,7 @@ def process_data(csv_path, chunksize=10000):
     first_chunk = True
     total_rows = 0
     
-    # Definir tipos SQLAlchemy pras colunas
+    # Definir os tipos  das colunas
     dtype = {
         'ANO': Integer(),
         'MES': Integer(),
@@ -38,7 +38,7 @@ def process_data(csv_path, chunksize=10000):
         logger.info(f"Processando chunk {i + 1} com {len(chunk)} linhas totais")
         logger.info(f"Colunas no chunk: {chunk.columns.tolist()}")
         
-        # Aplicar filtros
+        # Aplicando filtros do case
         chunk_filtered = chunk[
             (chunk['EMPRESA_SIGLA'] == 'GLO') &
             (chunk['GRUPO_DE_VOO'] == 'REGULAR') &
@@ -47,7 +47,7 @@ def process_data(csv_path, chunksize=10000):
         
         logger.info(f"Linhas após filtro: {len(chunk_filtered)}")
         
-        # Criar a coluna MERCADO
+        # Criar a coluna MERCADO seguindo o case
         chunk_filtered['MERCADO'] = chunk_filtered.apply(
             lambda row: ''.join(sorted([
                 str(row['AEROPORTO_DE_ORIGEM_SIGLA']) if pd.notna(row['AEROPORTO_DE_ORIGEM_SIGLA']) else '',
@@ -56,11 +56,11 @@ def process_data(csv_path, chunksize=10000):
             axis=1
         )
         
-        # Selecionar colunas
+        # Selecionar colunas especificadas no case
         chunk_final = chunk_filtered[['ANO', 'MES', 'MERCADO', 'RPK','ASK']]
         total_rows += len(chunk_final)
         
-        # Salvar no banco com tipos corretos
+        # Salvar no banco
         if first_chunk:
             chunk_final.to_sql('flight_data', engine, if_exists='replace', index=False, dtype=dtype)
             logger.info(f"Tabela criada com {len(chunk_final)} linhas no primeiro chunk")
