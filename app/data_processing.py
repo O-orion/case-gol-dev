@@ -1,23 +1,19 @@
-import pandas as pd
 from sqlalchemy import create_engine
+import pandas as pd
 import os
 import logging
+from sqlalchemy.types import Integer, String, Float 
 
-# Configurar logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def process_data(csv_path, chunksize=10000):
-    """
-    Processa o CSV em pedaços e salva no banco de dados.
-    
-    :param csv_path: Caminho do arquivo CSV
-    :param chunksize: Tamanho do chunk, número de linhas por vez
-    """
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"O arquivo {csv_path} não foi encontrado.")
     
-    engine = create_engine('sqlite:///flight_stats.db')
+    # Conexão com PostgreSQL
+    engine = create_engine('postgresql+psycopg2://admin:1234@localhost:5432/flight_stats')
+    
     chunk_iterator = pd.read_csv(
         csv_path, 
         encoding='utf-8', 
@@ -29,10 +25,17 @@ def process_data(csv_path, chunksize=10000):
     first_chunk = True
     total_rows = 0
     
+    # Definir tipos SQLAlchemy pras colunas
+    dtype = {
+        'ANO': Integer(),
+        'MES': Integer(),
+        'MERCADO': String(),
+        'RPK': Float(),
+        "ASK": Float(),
+    }
+    
     for i, chunk in enumerate(chunk_iterator):
         logger.info(f"Processando chunk {i + 1} com {len(chunk)} linhas totais")
-        
-        # Verificar colunas disponíveis
         logger.info(f"Colunas no chunk: {chunk.columns.tolist()}")
         
         # Aplicar filtros
@@ -40,7 +43,7 @@ def process_data(csv_path, chunksize=10000):
             (chunk['EMPRESA_SIGLA'] == 'GLO') &
             (chunk['GRUPO_DE_VOO'] == 'REGULAR') &
             (chunk['NATUREZA'] == 'DOMÉSTICA')
-        ]
+        ].copy()
         
         logger.info(f"Linhas após filtro: {len(chunk_filtered)}")
         
@@ -53,17 +56,17 @@ def process_data(csv_path, chunksize=10000):
             axis=1
         )
         
-        # Selecionar colunas relevantes
-        chunk_final = chunk_filtered[['ANO', 'MES', 'MERCADO', 'RPK']]
+        # Selecionar colunas
+        chunk_final = chunk_filtered[['ANO', 'MES', 'MERCADO', 'RPK','ASK']]
         total_rows += len(chunk_final)
         
-        # Salvar no banco de dados
+        # Salvar no banco com tipos corretos
         if first_chunk:
-            chunk_final.to_sql('flight_data', engine, if_exists='replace', index=False)
+            chunk_final.to_sql('flight_data', engine, if_exists='replace', index=False, dtype=dtype)
             logger.info(f"Tabela criada com {len(chunk_final)} linhas no primeiro chunk")
             first_chunk = False
         else:
-            chunk_final.to_sql('flight_data', engine, if_exists='append', index=False)
+            chunk_final.to_sql('flight_data', engine, if_exists='append', index=False, dtype=dtype)
             logger.info(f"Adicionado {len(chunk_final)} linhas ao banco")
         
     if total_rows == 0:

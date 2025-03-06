@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from flask_login import login_user, login_required, logout_user, current_user
 from . import db, login_manager
 from .models import User, FilterData, UserFilter
-from .services import get_flight_data, get_flight_data_csv, get_dashboard_initial_data, FlightDataRepository, get_flight_data_pdf
+from .services import get_flight_data, get_flight_RPK, get_flight_data_csv, get_dashboard_initial_data, FlightDataRepository, get_flight_data_pdf
 from datetime import datetime
 import logging
 
@@ -156,6 +156,65 @@ def export_csv():
         logger.error(f"Erro interno ao exportar CSV: {str(e)}")
         flash("Erro interno ao gerar o CSV.", 'danger')
         return redirect(url_for('main.dashboard'))
+
+@bp.route('/rpk', methods=['POST'] )
+def rpk_quadrado():
+
+    repo = FlightDataRepository()
+    initial_data = get_dashboard_initial_data(repo)
+    mercados = initial_data['mercados']
+    anos = initial_data['anos']
+    current_year, current_month = datetime.now().year, datetime.now().month
+
+    logger.info("")
+    logger.info("INFOFOFOFOO")
+    logger.info("")
+
+    if request.method == 'POST':
+        try:
+            filter_data = FilterData(
+                mercado=request.form['mercado'],
+                ano_inicio=int(request.form['ano_inicio']),
+                ano_fim=int(request.form['ano_fim']),
+                mes_inicio=int(request.form.get('mes_inicio', 1)),
+                mes_fim=int(request.form.get('mes_fim', 12))
+            )
+
+            logger.info("")
+            logger.info(filter_data)
+            logger.info("")
+            
+            chart_data = get_flight_RPK(filter_data, repo)
+            
+            # Salva o filtro no histórico
+            user_filter = UserFilter(
+                user_id=current_user.id,
+                mercado=filter_data.mercado,
+                ano_inicio=filter_data.ano_inicio,
+                ano_fim=filter_data.ano_fim,
+                mes_inicio=filter_data.mes_inicio,
+                mes_fim=filter_data.mes_fim
+            )
+            db.session.add(user_filter)
+            db.session.commit()
+            logger.info(f"Filtro salvo no histórico para usuário {current_user.id}")
+
+            return jsonify(chart_data)
+        except ValueError as e:
+            logger.error(f"Erro de validação: {str(e)}")
+            return jsonify({'error': str(e)}), 400
+        except Exception as e:
+            logger.error(f"Erro interno: {str(e)}")
+            return jsonify({'error': 'Erro interno no servidor.'}), 500
+
+    return render_template(
+        'dashboard.html',
+        mercados=mercados,
+        anos=anos,
+        current_year=current_year,
+        current_month=current_month,
+        history=history_formatted 
+    )
 
 @bp.route('/export_pdf', methods=['POST'])
 @login_required

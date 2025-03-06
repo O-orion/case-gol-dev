@@ -6,9 +6,8 @@ from typing import List
 
 class FlightDataRepository:
     """Repositório para acesso aos dados de voos no banco SQLite."""
-    def __init__(self, db_path: str = 'flight_stats.db'):
-        """Inicializa o repositório com o caminho do banco."""
-        self.engine: Engine = create_engine(f'sqlite:///{db_path}')
+    def __init__(self, db_path: str = 'postgresql+psycopg2://admin:1234@localhost:5432/flight_stats'):
+        self.engine: Engine = create_engine(db_path)
 
     def get_all_flight_data(self) -> pd.DataFrame:
         """Recupera todos os dados de voos da tabela 'flight_data'."""
@@ -17,12 +16,12 @@ class FlightDataRepository:
     def get_filtered_flight_data(self, filter_data: FilterData) -> pd.DataFrame:
         """Recupera dados de voos filtrados por mercado e período."""
         query = """
-            SELECT ANO, MES, MERCADO, RPK 
+            SELECT "ANO", "MES", "MERCADO", "RPK", "ASK" 
             FROM flight_data 
-            WHERE MERCADO = :mercado 
-            AND ((ANO > :ano_inicio AND ANO < :ano_fim) 
-                 OR (ANO = :ano_inicio AND MES >= :mes_inicio) 
-                 OR (ANO = :ano_fim AND MES <= :mes_fim))
+            WHERE "MERCADO" = %(mercado)s 
+            AND (("ANO" > %(ano_inicio)s AND "ANO" < %(ano_fim)s) 
+                 OR ("ANO" = %(ano_inicio)s AND "MES" >= %(mes_inicio)s) 
+                 OR ("ANO" = %(ano_fim)s AND "MES" <= %(mes_fim)s))
         """
         return pd.read_sql(query, self.engine, params=filter_data.dict())
 
